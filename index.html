@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CHICKROLL POS — Sistem Kasir & Rekap UMKM</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #12091c;
+      --card-glass: rgba(255, 255, 255, 0.08);
+      --card-border: rgba(255, 255, 255, 0.16);
+      --accent-pink: #ff4d94;
+      --accent-yellow: #ffd000;
+      --accent-purple: #9d4edd;
+      --text-main: #ffffff;
+      --text-muted: #cbb8df;
+      --success: #2ec4b6;
+      --danger: #ff595e;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+      padding-bottom: 60px;
+    }
+
+    /* Liquid Background Blobs */
+    .liquid-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: -1;
+      overflow: hidden;
+      background: radial-gradient(circle at 50% 20%, #2b103b 0%, #11061a 100%);
+    }
+
+    .blob {
+      position: absolute;
+      filter: blur(80px);
+      opacity: 0.55;
+      border-radius: 50%;
+      animation: floatBlob 14s infinite alternate ease-in-out;
+    }
+
+    .blob-1 {
+      width: 420px;
+      height: 420px;
+      background: var(--accent-pink);
+      top: -100px;
+      left: -100px;
+    }
+
+    .blob-2 {
+      width: 380px;
+      height: 380px;
+      background: var(--accent-purple);
+      bottom: -80px;
+      right: -60px;
+      animation-delay: -5s;
+    }
+
+    .blob-3 {
+      width: 280px;
+      height: 280px;
+      background: #ff9e00;
+      top: 40%;
+      left: 45%;
+      opacity: 0.3;
+      animation-delay: -9s;
+    }
+
+    @keyframes floatBlob {
+      0% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(40px, -30px) scale(1.12); }
+      100% { transform: translate(-30px, 40px) scale(0.94); }
+    }
+
+    /* Container & Header */
+    .container {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 20px 24px;
+      background: var(--card-glass);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--card-border);
+      border-radius: 26px;
+      margin-bottom: 24px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-logo {
+      width: 52px;
+      height: 52px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, var(--accent-yellow), var(--accent-pink));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.5rem;
+      color: #1a0926;
+      box-shadow: 0 6px 20px rgba(255, 77, 148, 0.4);
+    }
+
+    .brand-text h1 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      background: linear-gradient(90deg, #fff, var(--accent-yellow));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-text p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .stats-bar {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .stat-pill {
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid var(--card-border);
+      padding: 10px 16px;
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      min-width: 120px;
+    }
+
+    .stat-pill span {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .stat-pill strong {
+      font-size: 1.05rem;
+      color: var(--accent-yellow);
+      margin-top: 2px;
+    }
+
+    /* Main Soft Grid Layout */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1.35fr 0.95fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    @media (max-width: 920px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Glass Panels */
+    .glass-panel {
+      background: var(--card-glass);
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+      border: 1px solid var(--card-border);
+      border-radius: 26px;
+      padding: 24px;
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.25);
+    }
+
+    .section-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .section-title .badge {
+      font-size: 0.75rem;
+      padding: 4px 12px;
+      border-radius: 20px;
+      background: rgba(255, 208, 0, 0.18);
+      color: var(--accent-yellow);
+      border: 1px solid rgba(255, 208, 0, 0.35);
+    }
+
+    /* Menu Cards Soft Grid */
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .menu-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1.5px solid var(--card-border);
+      border-radius: 22px;
+      padding: 18px;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 150px;
+    }
+
+    .menu-card:hover {
+      transform: translateY(-4px);
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--accent-yellow);
+      box-shadow: 0 10px 25px rgba(255, 77, 148, 0.25);
+    }
+
+    .menu-card.active {
+      border-color: var(--accent-yellow);
+      background: linear-gradient(145deg, rgba(255, 77, 148, 0.22), rgba(157, 78, 221, 0.18));
+      box-shadow: 0 0 24px rgba(255, 208, 0, 0.25);
+    }
+
+    .menu-icon {
+      font-size: 2.1rem;
+      margin-bottom: 10px;
+    }
+
+    .menu-name {
+      font-weight: 700;
+      font-size: 1.05rem;
+      margin-bottom: 4px;
+    }
+
+    .menu-desc {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      line-height: 1.35;
+    }
+
+    .menu-price-tag {
+      align-self: flex-start;
+      background: var(--accent-yellow);
+      color: #1a0926;
+      font-weight: 800;
+      font-size: 0.82rem;
+      padding: 5px 12px;
+      border-radius: 12px;
+    }
+
+    /* Configurator Box */
+    .configurator {
+      background: rgba(0, 0, 0, 0.28);
+      border: 1px solid var(--card-border);
+      border-radius: 22px;
+      padding: 20px;
+      margin-top: 8px;
+      animation: fadeIn 0.25s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .config-step {
+      margin-bottom: 18px;
+    }
+
+    .config-label {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--accent-yellow);
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .options-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+      gap: 10px;
+    }
+
+    .opt-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1.5px solid var(--card-border);
+      color: var(--text-main);
+      padding: 11px 14px;
+      border-radius: 14px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .opt-btn small {
+      color: var(--text-muted);
+      font-weight: 500;
+      font-size: 0.74rem;
+    }
+
+    .opt-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .opt-btn.selected {
+      background: var(--accent-pink);
+      border-color: #fff;
+      color: #fff;
+      box-shadow: 0 4px 15px rgba(255, 77, 148, 0.45);
+    }
+
+    .opt-btn.selected small {
+      color: #ffe6f0;
+    }
+
+    .add-to-cart-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid var(--card-border);
+    }
+
+    .qty-control {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 6px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--card-border);
+    }
+
+    .qty-btn {
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 1.2rem;
+      font-weight: 700;
+      width: 28px;
+      height: 28px;
+      cursor: pointer;
+      border-radius: 8px;
+    }
+
+    .qty-btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .btn-primary {
+      flex: 1;
+      background: linear-gradient(135deg, var(--accent-yellow), #ff9e00);
+      color: #1a0926;
+      border: none;
+      padding: 14px 20px;
+      border-radius: 16px;
+      font-weight: 800;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 6px 20px rgba(255, 208, 0, 0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(255, 208, 0, 0.45);
+    }
+
+    /* Cart & Checkout Section */
+    .cart-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-height: 330px;
+      overflow-y: auto;
+      padding-right: 4px;
+      margin-bottom: 18px;
+    }
+
+    .cart-item {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 13px 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .cart-item-info h4 {
+      font-size: 0.92rem;
+      margin-bottom: 3px;
+    }
+
+    .cart-item-info p {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      line-height: 1.35;
+    }
+
+    .cart-item-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .cart-item-price {
+      font-weight: 700;
+      color: var(--accent-yellow);
+      font-size: 0.9rem;
+      white-space: nowrap;
+    }
+
+    .btn-del {
+      background: rgba(255, 89, 94, 0.2);
+      color: var(--danger);
+      border: 1px solid rgba(255, 89, 94, 0.4);
+      width: 30px;
+      height: 30px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    /* Payment Selector */
+    .payment-methods {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .pay-btn {
+      padding: 12px;
+      border-radius: 14px;
+      border: 1.5px solid var(--card-border);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-main);
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .pay-btn.active {
+      background: rgba(46, 196, 182, 0.22);
+      border-color: var(--success);
+      color: #fff;
+      box-shadow: 0 0 18px rgba(46, 196, 182, 0.3);
+    }
+
+    .customer-input {
+      width: 100%;
+      padding: 12px 15px;
+      border-radius: 14px;
+      border: 1px solid var(--card-border);
+      background: rgba(255, 255, 255, 0.06);
+      color: #fff;
+      font-size: 0.88rem;
+      margin-bottom: 14px;
+      outline: none;
+    }
+
+    .customer-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .total-box {
+      background: linear-gradient(135deg, rgba(255, 77, 148, 0.2), rgba(157, 78, 221, 0.2));
+      border: 1px solid var(--card-border);
+      padding: 16px 18px;
+      border-radius: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .total-box span {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .total-box strong {
+      font-size: 1.4rem;
+      color: var(--accent-yellow);
+    }
+
+    .action-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, #2ec4b6, #20a4f3);
+      color: #fff;
+      border: none;
+      padding: 14px;
+      border-radius: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .btn-copy {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      border: 1px solid var(--card-border);
+      padding: 14px;
+      border-radius: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .btn-copy:hover, .btn-success:hover {
+      opacity: 0.92;
+      transform: translateY(-1px);
+    }
+
+    /* History & Rekap Section */
+    .history-section {
+      margin-top: 24px;
+    }
+
+    .history-header-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn-sm {
+      padding: 8px 14px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1px solid var(--card-border);
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+    }
+
+    .btn-sm.CopyRekap {
+      background: var(--accent-pink);
+      border-color: var(--accent-pink);
+    }
+
+    .btn-sm.danger {
+      background: rgba(255, 89, 94, 0.2);
+      color: #ff8589;
+      border-color: rgba(255, 89, 94, 0.35);
+    }
+
+    .history-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .history-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .history-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .tag-pay {
+      padding: 3px 9px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.72rem;
+    }
+
+    .tag-pay.CASH {
+      background: rgba(255, 208, 0, 0.2);
+      color: var(--accent-yellow);
+    }
+
+    .tag-pay.QRIS {
+      background: rgba(46, 196, 182, 0.2);
+      color: var(--success);
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #1a0926;
+      border: 1.5px solid var(--accent-yellow);
+      color: #fff;
+      padding: 14px 20px;
+      border-radius: 16px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s ease;
+      z-index: 999;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Liquid Dynamic Background -->
+  <div class="liquid-bg">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+  </div>
+
+  <div class="container">
+    <!-- Header & Quick Rekap -->
+    <header>
+      <div class="brand">
+        <div class="brand-logo">CR</div>
+        <div class="brand-text">
+          <h1>CHICKROLL POS</h1>
+          <p>Liquid Soft Grid Kasir & Rekap Otomatis</p>
+        </div>
+      </div>
+      <div class="stats-bar">
+        <div class="stat-pill">
+          <span>Total Order</span>
+          <strong id="statTotalOrder">0 Pesanan</strong>
+        </div>
+        <div class="stat-pill">
+          <span>Tunai (Cash)</span>
+          <strong id="statCash">Rp 0</strong>
+        </div>
+        <div class="stat-pill">
+          <span>Non-Tunai (QRIS)</span>
+          <strong id="statQris">Rp 0</strong>
+        </div>
+        <div class="stat-pill">
+          <span>Total Omzet</span>
+          <strong id="statOmzet">Rp 0</strong>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Grid -->
+    <div class="main-grid">
+      
+      <!-- Panel Kiri: Menu & Customizer -->
+      <div class="glass-panel">
+        <div class="section-title">
+          <span>🍔 Pilih Menu Utama</span>
+          <span class="badge">Klik Menu Untuk Kustomisasi</span>
+        </div>
+
+        <!-- Menu Cards -->
+        <div class="menu-grid" id="menuGrid"></div>
+
+        <!-- Dynamic Customizer Area -->
+        <div id="configuratorBox" class="configurator"></div>
+      </div>
+
+      <!-- Panel Kanan: Keranjang & Pembayaran -->
+      <div class="glass-panel">
+        <div class="section-title">
+          <span>🛒 Keranjang Pesanan</span>
+          <span class="badge" id="cartCountBadge">0 Item</span>
+        </div>
+
+        <input type="text" id="customerName" class="customer-input" placeholder="Nama Pelanggan / Nomor Antrian (Opsional)" />
+
+        <div class="cart-list" id="cartList">
+          <p style="color: var(--text-muted); text-align: center; padding: 24px 0; font-size: 0.88rem;">
+            Belum ada menu yang dipilih.
+          </p>
+        </div>
+
+        <div class="config-label" style="margin-bottom: 8px;">Metode Pembayaran (Rekap Data)</div>
+        <div class="payment-methods">
+          <button class="pay-btn active" id="payCash" onclick="setPayment('CASH')">💵 CASH (Tunai)</button>
+          <button class="pay-btn" id="payQris" onclick="setPayment('QRIS')">📱 QRIS</button>
+        </div>
+
+        <div class="total-box">
+          <span>Total Bayar</span>
+          <strong id="grandTotal">Rp 0</strong>
+        </div>
+
+        <div class="action-buttons">
+          <button class="btn-copy" onclick="copyCurrentReceipt()">📋 Salin Struk</button>
+          <button class="btn-success" onclick="saveTransaction()">✅ Simpan Transaksi</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Riwayat & Rekap Penjualan (LocalStorage) -->
+    <div class="glass-panel history-section">
+      <div class="section-title">
+        <span>📊 Riwayat & Rekap Penjualan Harian</span>
+        <div class="history-header-actions">
+          <button class="btn-sm CopyRekap" onclick="copyDailyRecap()">✨ Salin Rekap Estetik (WA)</button>
+          <button class="btn-sm danger" onclick="clearAllHistory()">🗑️ Reset Data</button>
+        </div>
+      </div>
+      <div class="history-grid" id="historyGrid"></div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast">Berhasil disalin!</div>
+
+  <script>
+    // DATA MENU SESUAI FOTO PRICELIST CHICKROLL
+    const BUMBULIST = ["Amai BBQ", "Hot Chiri", "Japanese Nori", "Keju Cheddar"];
+
+    const MENUS = [
+      {
+        id: "chickroll",
+        name: "Chick Roll",
+        icon: "🌯",
+        desc: "Pilih ukuran 10cm / 20cm + 1 Saus + 2 Bumbu tabur favorit.",
+        priceLabel: "Rp 12.000 - 15.000",
+        variants: [
+          { label: "Small (10cm)", price: 12000 },
+          { label: "Reguler (20cm)", price: 15000 }
+        ],
+        sauces: ["Salty Chizu Sauce", "Japanese Kara Sauce"],
+        maxBumbu: 2,
+        addons: []
+      },
+      {
+        id: "macncheese",
+        name: "Mac N Cheese",
+        icon: "🧀",
+        desc: "Macaroni creamy keju lumer Original atau dengan Chicken Crispy.",
+        priceLabel: "Rp 15.000 - 20.000",
+        variants: [
+          { label: "Original", price: 15000 },
+          { label: "With Chicken Crispy", price: 20000 }
+        ],
+        sauces: [],
+        maxBumbu: 0,
+        addons: []
+      },
+      {
+        id: "fries_ori",
+        name: "French Fries Original",
+        icon: "🍟",
+        desc: "Kentang goreng renyah bebas pilih 2 bumbu tabur enak.",
+        priceLabel: "Rp 10.000",
+        variants: [
+          { label: "Original Pack", price: 10000 }
+        ],
+        sauces: [],
+        maxBumbu: 2,
+        addons: []
+      },
+      {
+        id: "fries_sauce",
+        name: "French Fries With Sauce",
+        icon: "🥫",
+        desc: "Kentang goreng dengan saus Bolognese / BBQ / Cheese + opsi Topping.",
+        priceLabel: "Rp 12.000",
+        variants: [
+          { label: "With Sauce", price: 12000 }
+        ],
+        sauces: ["Bolognese", "BBQ", "Cheese Sauce"],
+        maxBumbu: 0,
+        addons: [
+          { label: "Tanpa Topping", price: 0 },
+          { label: "+ Beef Sausage", price: 3000 },
+          { label: "+ Chicken Crispy", price: 3000 }
+        ]
+      }
+    ];
+
+    // STATE APLIKASI
+    let activeMenu = MENUS[0];
+    let currentSelection = {
+      variantIndex: 0,
+      sauce: "",
+      bumbu: [],
+      addonIndex: 0,
+      qty: 1
+    };
+
+    let cart = [];
+    let paymentMethod = "CASH";
+    let transactions = JSON.parse(localStorage.getItem("chickroll_transactions_v1")) || [];
+
+    // FORMAT RUPIAH
+    function formatRp(num) {
+      return "Rp " + Number(num).toLocaleString("id-ID");
+    }
+
+    // RENDER MENU UTAMA
+    function renderMenus() {
+      const grid = document.getElementById("menuGrid");
+      grid.innerHTML = MENUS.map(m => `
+        <div class="menu-card ${activeMenu.id === m.id ? 'active' : ''}" onclick="selectMenu('${m.id}')">
+          <div>
+            <div class="menu-icon">${m.icon}</div>
+            <div class="menu-name">${m.name}</div>
+            <div class="menu-desc">${m.desc}</div>
+          </div>
+          <div class="menu-price-tag">${m.priceLabel}</div>
+        </div>
+      `).join("");
+    }
+
+    function selectMenu(menuId) {
+      activeMenu = MENUS.find(m => m.id === menuId);
+      currentSelection = {
+        variantIndex: 0,
+        sauce: activeMenu.sauces.length > 0 ? activeMenu.sauces[0] : "",
+        bumbu: activeMenu.maxBumbu > 0 ? [BUMBULIST[0]] : [],
+        addonIndex: 0,
+        qty: 1
+      };
+      renderMenus();
+      renderConfigurator();
+    }
+
+    // RENDER KUSTOMISASI MENU
+    function renderConfigurator() {
+      const box = document.getElementById("configuratorBox");
+      const variant = activeMenu.variants[currentSelection.variantIndex];
+      const addon = activeMenu.addons.length > 0 ? activeMenu.addons[currentSelection.addonIndex] : { price: 0 };
+      const unitPrice = variant.price + addon.price;
+      const subTotal = unitPrice * currentSelection.qty;
+
+      let html = `
+        <div style="font-weight: 800; font-size: 1.05rem; margin-bottom: 14px; color: #fff;">
+          ✨ Kustomisasi: ${activeMenu.name}
+        </div>
+      `;
+
+      // Step Ukuran / Varian
+      if (activeMenu.variants.length > 0) {
+        html += `
+          <div class="config-step">
+            <div class="config-label"><span>1. Pilih Ukuran / Varian</span></div>
+            <div class="options-grid">
+              ${activeMenu.variants.map((v, idx) => `
+                <button class="opt-btn ${currentSelection.variantIndex === idx ? 'selected' : ''}" onclick="setVariant(${idx})">
+                  <span>${v.label}</span>
+                  <small>${formatRp(v.price)}</small>
+                </button>
+              `).join("")}
+            </div>
+          </div>
+        `;
+      }
+
+      // Step Saus
+      if (activeMenu.sauces.length > 0) {
+        html += `
+          <div class="config-step">
+            <div class="config-label"><span>2. Pilih Saus Sesuai Selera</span></div>
+            <div class="options-grid">
+              ${activeMenu.sauces.map(s => `
+                <button class="opt-btn ${currentSelection.sauce === s ? 'selected' : ''}" onclick="setSauce('${s}')">
+                  <span>${s}</span>
+                  <small>Included</small>
+                </button>
+              `).join("")}
+            </div>
+          </div>
+        `;
+      }
+
+      // Step 2 Bumbu
+      if (activeMenu.maxBumbu > 0) {
+        html += `
+          <div class="config-step">
+            <div class="config-label">
+              <span>3. Pilih Bumbu (Maksimal ${activeMenu.maxBumbu})</span>
+              <span>Terpilih: ${currentSelection.bumbu.length}/${activeMenu.maxBumbu}</span>
+            </div>
+            <div class="options-grid">
+              ${BUMBULIST.map(b => {
+                const isSelected = currentSelection.bumbu.includes(b);
+                return `
+                  <button class="opt-btn ${isSelected ? 'selected' : ''}" onclick="toggleBumbu('${b}')">
+                    <span>${b}</span>
+                    <small>${isSelected ? '✓ Dipilih' : 'Klik untuk pilih'}</small>
+                  </button>
+                `;
+              }).join("")}
+            </div>
+          </div>
+        `;
+      }
+
+      // Step Addon Topping
+      if (activeMenu.addons.length > 0) {
+        html += `
+          <div class="config-step">
+            <div class="config-label"><span>3. Add-On Topping</span></div>
+            <div class="options-grid">
+              ${activeMenu.addons.map((a, idx) => `
+                <button class="opt-btn ${currentSelection.addonIndex === idx ? 'selected' : ''}" onclick="setAddon(${idx})">
+                  <span>${a.label}</span>
+                  <small>${a.price > 0 ? '+' + formatRp(a.price) : 'Rp 0'}</small>
+                </button>
+              `).join("")}
+            </div>
+          </div>
+        `;
+      }
+
+      // Bar Tambah Keranjang
+      html += `
+        <div class="add-to-cart-bar">
+          <div class="qty-control">
+            <button class="qty-btn" onclick="changeQty(-1)">−</button>
+            <span style="font-weight: 800; min-width: 22px; text-align: center;">${currentSelection.qty}</span>
+            <button class="qty-btn" onclick="changeQty(1)">+</button>
+          </div>
+          <button class="btn-primary" onclick="addToCart()">
+            + Tambah Pesanan (${formatRp(subTotal)})
+          </button>
+        </div>
+      `;
+
+      box.innerHTML = html;
+    }
+
+    function setVariant(idx) {
+      currentSelection.variantIndex = idx;
+      renderConfigurator();
+    }
+
+    function setSauce(sauceName) {
+      currentSelection.sauce = sauceName;
+      renderConfigurator();
+    }
+
+    function toggleBumbu(bumbuName) {
+      const idx = currentSelection.bumbu.indexOf(bumbuName);
+      if (idx > -1) {
+        currentSelection.bumbu.splice(idx, 1);
+      } else {
+        if (currentSelection.bumbu.length < activeMenu.maxBumbu) {
+          currentSelection.bumbu.push(bumbuName);
+        } else {
+          currentSelection.bumbu.shift();
+          currentSelection.bumbu.push(bumbuName);
+        }
+      }
+      renderConfigurator();
+    }
+
+    function setAddon(idx) {
+      currentSelection.addonIndex = idx;
+      renderConfigurator();
+    }
+
+    function changeQty(delta) {
+      const newQty = currentSelection.qty + delta;
+      if (newQty >= 1) {
+        currentSelection.qty = newQty;
+        renderConfigurator();
+      }
+    }
+
+    // TAMBAH KE KERANJANG
+    function addToCart() {
+      const variant = activeMenu.variants[currentSelection.variantIndex];
+      const addon = activeMenu.addons.length > 0 ? activeMenu.addons[currentSelection.addonIndex] : { label: "", price: 0 };
+      const unitPrice = variant.price + addon.price;
+
+      const details = [];
+      if (variant.label) details.push(variant.label);
+      if (currentSelection.sauce) details.push(`Saus: ${currentSelection.sauce}`);
+      if (currentSelection.bumbu.length > 0) details.push(`Bumbu: ${currentSelection.bumbu.join(" + ")}`);
+      if (addon.price > 0) details.push(addon.label);
+
+      cart.push({
+        id: Date.now() + Math.random(),
+        name: activeMenu.name,
+        details: details.join(" | "),
+        qty: currentSelection.qty,
+        unitPrice: unitPrice,
+        totalPrice: unitPrice * currentSelection.qty
+      });
+
+      renderCart();
+      showToast(`✅ ${activeMenu.name} ditambahkan ke keranjang!`);
+    }
+
+    function removeCartItem(id) {
+      cart = cart.filter(item => item.id !== id);
+      renderCart();
+    }
+
+    function renderCart() {
+      const list = document.getElementById("cartList");
+      const countBadge = document.getElementById("cartCountBadge");
+      const grandTotalEl = document.getElementById("grandTotal");
+
+      const totalItems = cart.reduce((acc, item) => acc + item.qty, 0);
+      const grandTotal = cart.reduce((acc, item) => acc + item.totalPrice, 0);
+
+      countBadge.textContent = `${totalItems} Item`;
+      grandTotalEl.textContent = formatRp(grandTotal);
+
+      if (cart.length === 0) {
+        list.innerHTML = `
+          <p style="color: var(--text-muted); text-align: center; padding: 24px 0; font-size: 0.88rem;">
+            Belum ada menu yang dipilih.
+          </p>
+        `;
+        return;
+      }
+
+      list.innerHTML = cart.map(item => `
+        <div class="cart-item">
+          <div class="cart-item-info">
+            <h4>${item.qty}x ${item.name}</h4>
+            <p>${item.details}</p>
+          </div>
+          <div class="cart-item-right">
+            <span class="cart-item-price">${formatRp(item.totalPrice)}</span>
+            <button class="btn-del" onclick="removeCartItem(${item.id})">✕</button>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function setPayment(method) {
+      paymentMethod = method;
+      document.getElementById("payCash").classList.toggle("active", method === "CASH");
+      document.getElementById("payQris").classList.toggle("active", method === "QRIS");
+    }
+
+    // SIMPAN TRANSAKSI KE LOCALSTORAGE
+    function saveTransaction() {
+      if (cart.length === 0) {
+        showToast("⚠️ Keranjang masih kosong!");
+        return;
+      }
+
+      const customer = document.getElementById("customerName").value.trim() || "Pelanggan Umum";
+      const total = cart.reduce((acc, item) => acc + item.totalPrice, 0);
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+      const dateStr = now.toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" });
+
+      const newTrx = {
+        id: "CR-" + Date.now().toString().slice(-5),
+        customer,
+        time: `${dateStr}, ${timeStr}`,
+        payment: paymentMethod,
+        items: [...cart],
+        total
+      };
+
+      transactions.unshift(newTrx);
+      localStorage.setItem("chickroll_transactions_v1", JSON.stringify(transactions));
+
+      cart = [];
+      document.getElementById("customerName").value = "";
+      renderCart();
+      renderHistoryAndStats();
+      showToast("🎉 Transaksi berhasil disimpan!");
+    }
+
+    // SALIN STRUK PESANAN SAAT INI
+    function copyCurrentReceipt() {
+      if (cart.length === 0) {
+        showToast("⚠️ Pilih menu terlebih dahulu!");
+        return;
+      }
+
+      const customer = document.getElementById("customerName").value.trim() || "Pelanggan";
+      const total = cart.reduce((acc, item) => acc + item.totalPrice, 0);
+      const now = new Date().toLocaleString("id-ID");
+
+      let text = `✨ *STRUK PESANAN CHICKROLL* ✨\n`;
+      text += `👤 Pelanggan : ${customer}\n`;
+      text += `🕒 Waktu     : ${now}\n`;
+      text += `💳 Pembayaran: ${paymentMethod}\n`;
+      text += `━━━━━━━━━━━━━━━━━━━━\n`;
+      cart.forEach(item => {
+        text += `• *${item.qty}x ${item.name}* (${formatRp(item.totalPrice)})\n`;
+        text += `  _${item.details}_\n`;
+      });
+      text += `━━━━━━━━━━━━━━━━━━━━\n`;
+      text += `💰 *TOTAL : ${formatRp(total)}*\n`;
+      text += `Terima kasih sudah jajan di Chickroll! 🌯✨`;
+
+      navigator.clipboard.writeText(text);
+      showToast("📋 Struk pesanan berhasil disalin!");
+    }
+
+    // SALIN REKAP HARIAN ESTETIK
+    function copyDailyRecap() {
+      if (transactions.length === 0) {
+        showToast("⚠️ Belum ada data transaksi untuk direkap!");
+        return;
+      }
+
+      const totalOrder = transactions.length;
+      const totalCash = transactions.filter(t => t.payment === "CASH").reduce((a, b) => a + b.total, 0);
+      const totalQris = transactions.filter(t => t.payment === "QRIS").reduce((a, b) => a + b.total, 0);
+      const grandOmzet = totalCash + totalQris;
+      const today = new Date().toLocaleDateString("id-ID", { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+      let text = `🌸 *REKAP PENJUALAN CHICKROLL* 🌸\n`;
+      text += `📅 Tanggal: ${today}\n`;
+      text += `━━━━━━━━━━━━━━━━━━━━━━\n`;
+      text += `📦 Total Transaksi : *${totalOrder} Pesanan*\n`;
+      text += `💵 Total CASH      : *${formatRp(totalCash)}*\n`;
+      text += `📱 Total QRIS      : *${formatRp(totalQris)}*\n`;
+      text += `🔥 *TOTAL OMZET   : ${formatRp(grandOmzet)}*\n`;
+      text += `━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+      text += `📝 *RINCIAN PESANAN:*\n`;
+
+      transactions.forEach((t, idx) => {
+        text += `${idx + 1}. *[${t.payment}] ${t.customer}* — *${formatRp(t.total)}*\n`;
+        t.items.forEach(i => {
+          text += `   ▫️ ${i.qty}x ${i.name} (${i.details})\n`;
+        });
+      });
+
+      navigator.clipboard.writeText(text);
+      showToast("✨ Rekap Estetik berhasil disalin ke Clipboard!");
+    }
+
+    // RENDER RIWAYAT & STATISTIK
+    function renderHistoryAndStats() {
+      const totalOrder = transactions.length;
+      const totalCash = transactions.filter(t => t.payment === "CASH").reduce((a, b) => a + b.total, 0);
+      const totalQris = transactions.filter(t => t.payment === "QRIS").reduce((a, b) => a + b.total, 0);
+      const grandOmzet = totalCash + totalQris;
+
+      document.getElementById("statTotalOrder").textContent = `${totalOrder} Pesanan`;
+      document.getElementById("statCash").textContent = formatRp(totalCash);
+      document.getElementById("statQris").textContent = formatRp(totalQris);
+      document.getElementById("statOmzet").textContent = formatRp(grandOmzet);
+
+      const grid = document.getElementById("historyGrid");
+      if (transactions.length === 0) {
+        grid.innerHTML = `<p style="color: var(--text-muted); font-size: 0.88rem;">Belum ada riwayat transaksi tersimpan.</p>`;
+        return;
+      }
+
+      grid.innerHTML = transactions.map(t => `
+        <div class="history-card">
+          <div>
+            <div class="history-card-top">
+              <span>#${t.id} • ${t.time}</span>
+              <span class="tag-pay ${t.payment}">${t.payment}</span>
+            </div>
+            <div style="font-weight: 700; margin: 6px 0; font-size: 0.95rem;">👤 ${t.customer}</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.4;">
+              ${t.items.map(i => `• ${i.qty}x ${i.name} <small>(${i.details})</small>`).join("<br/>")}
+            </div>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--card-border); padding-top: 10px; margin-top: 6px;">
+            <span style="font-size: 0.78rem; color: var(--text-muted);">Total Transaksi</span>
+            <strong style="color: var(--accent-yellow); font-size: 1rem;">${formatRp(t.total)}</strong>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function clearAllHistory() {
+      if (confirm("Yakin ingin menghapus seluruh riwayat rekap transaksi hari ini?")) {
+        transactions = [];
+        localStorage.removeItem("chickroll_transactions_v1");
+        renderHistoryAndStats();
+        showToast("🗑️ Data rekap berhasil direset.");
+      }
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.classList.add("show");
+      setTimeout(() => t.classList.remove("show"), 2600);
+    }
+
+    // INISIALISASI SAAT HALAMAN DIBUKA
+    selectMenu("chickroll");
+    renderCart();
+    renderHistoryAndStats();
+  </script>
+</body>
+</html>
