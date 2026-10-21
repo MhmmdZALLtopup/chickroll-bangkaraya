@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CHICKROLL POS — Sistem Kasir & Rekap UMKM</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* Light Theme Color Palette */
+      --bg-light: #f4f5f8;
+      --card-bg: rgba(255, 255, 255, 0.7);
+      --card-border: rgba(255, 255, 255, 0.6);
+      --card-shadow: 0 16px 40px rgba(0, 0, 0, 0.04);
+      
+      --brand-primary: #ff9e00;
+      --brand-secondary: #ff4d94;
+      --accent-blue: #3b82f6;
+      
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      
+      --success: #10b981;
+      --success-bg: #d1fae5;
+      --danger: #ef4444;
+      --danger-bg: #fee2e2;
+      --warning-bg: #fef3c7;
+      
+      --input-bg: rgba(255, 255, 255, 0.9);
+      --input-border: #e2e8f0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-light);
+      color: var(--text-main);
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Soft Pastel Liquid Background */
+    .liquid-bg {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      z-index: -1; overflow: hidden;
+      background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+    }
+    .blob {
+      position: absolute; filter: blur(100px); opacity: 0.6;
+      border-radius: 50%; animation: floatBlob 20s infinite alternate ease-in-out;
+    }
+    .blob-1 { width: 500px; height: 500px; background: rgba(255, 158, 0, 0.2); top: -10%; left: -10%; }
+    .blob-2 { width: 450px; height: 450px; background: rgba(255, 77, 148, 0.15); bottom: -10%; right: -5%; animation-delay: -5s; }
+    .blob-3 { width: 400px; height: 400px; background: rgba(59, 130, 246, 0.15); top: 40%; left: 40%; animation-delay: -10s; }
+
+    @keyframes floatBlob {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(40px, 50px) scale(1.1); }
+    }
+
+    /* Container & Navigation */
+    .container { max-width: 1240px; margin: 0 auto; padding: 20px; }
+
+    .nav-bar {
+      display: flex; gap: 10px; margin-bottom: 24px;
+      background: rgba(255, 255, 255, 0.5); padding: 8px; border-radius: 20px;
+      border: 1px solid var(--card-border); backdrop-filter: blur(12px);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+      overflow-x: auto;
+    }
+    .nav-btn {
+      flex: 1; padding: 14px 20px; border-radius: 14px; border: none;
+      background: transparent; color: var(--text-muted); font-weight: 700;
+      cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); white-space: nowrap; font-size: 0.95rem;
+    }
+    .nav-btn:hover { color: var(--text-main); background: rgba(255, 255, 255, 0.5); }
+    .nav-btn.active {
+      background: #ffffff; color: var(--brand-primary);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+
+    /* Header */
+    header {
+      display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
+      gap: 16px; padding: 24px; background: var(--card-bg); backdrop-filter: blur(20px);
+      border: 1px solid var(--card-border); border-radius: 28px; margin-bottom: 24px;
+      box-shadow: var(--card-shadow);
+    }
+    .brand { display: flex; align-items: center; gap: 16px; }
+    .brand-logo {
+      width: 56px; height: 56px; border-radius: 18px;
+      background: linear-gradient(135deg, var(--brand-primary), #ffb703);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 1.6rem; color: #ffffff; 
+      box-shadow: 0 8px 20px rgba(255, 158, 0, 0.3);
+    }
+    .brand-text h1 { font-size: 1.6rem; font-weight: 800; color: var(--text-main); letter-spacing: -0.5px; }
+    .brand-text p { font-size: 0.9rem; color: var(--text-muted); font-weight: 500; }
+
+    .stats-bar { display: flex; gap: 12px; flex-wrap: wrap; }
+    .stat-pill { 
+      background: #ffffff; border: 1px solid var(--input-border); 
+      padding: 12px 18px; border-radius: 18px; display: flex; flex-direction: column; 
+      min-width: 140px; box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+    }
+    .stat-pill span { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; }
+    .stat-pill strong { font-size: 1.15rem; color: var(--brand-primary); margin-top: 4px; font-weight: 800; }
+
+    /* Tabs Content */
+    .tab-content { display: none; animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+    .tab-content.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Grid Layouts */
+    .main-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 24px; align-items: start; }
+    @media (max-width: 920px) { .main-grid { grid-template-columns: 1fr; } }
+
+    .glass-panel {
+      background: var(--card-bg); backdrop-filter: blur(20px); border: 1px solid #ffffff;
+      border-radius: 28px; padding: 26px; box-shadow: var(--card-shadow);
+    }
+
+    .section-title { font-size: 1.2rem; font-weight: 800; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; color: var(--text-main); }
+    .badge { font-size: 0.75rem; font-weight: 600; padding: 6px 14px; border-radius: 20px; background: var(--warning-bg); color: #d97706; }
+
+    /* Menu Cards */
+    .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .menu-card {
+      background: #ffffff; border: 1.5px solid var(--input-border); border-radius: 22px; padding: 20px;
+      cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden; 
+      display: flex; flex-direction: column; justify-content: space-between; min-height: 170px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+    }
+    .menu-card:hover { transform: translateY(-6px); box-shadow: 0 12px 24px rgba(0,0,0,0.06); border-color: #cbd5e1; }
+    .menu-card.active {
+      border-color: var(--brand-primary); background: #fffaf0;
+      box-shadow: 0 8px 24px rgba(255, 158, 0, 0.15);
+    }
+    .menu-icon { font-size: 2.5rem; margin-bottom: 10px; }
+    .menu-name { font-weight: 800; font-size: 1.1rem; margin-bottom: 6px; color: var(--text-main); }
+    .menu-desc { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 14px; line-height: 1.5; font-weight: 500; }
+    .menu-price-tag { align-self: flex-start; background: var(--text-main); color: #ffffff; font-weight: 700; font-size: 0.85rem; padding: 6px 14px; border-radius: 12px; }
+    .menu-card.active .menu-price-tag { background: var(--brand-primary); color: #ffffff; }
+
+    /* Configurator Box */
+    .configurator { background: #ffffff; border: 1px solid var(--input-border); border-radius: 24px; padding: 24px; margin-top: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
+    .config-label { font-size: 0.9rem; font-weight: 700; color: var(--text-main); margin-bottom: 14px; display: flex; justify-content: space-between; }
+    .options-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 20px; }
+    .opt-btn {
+      background: var(--bg-light); border: 1.5px solid transparent; color: var(--text-main); padding: 14px;
+      border-radius: 16px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.2s; text-align: left; display: flex; flex-direction: column; gap: 4px;
+    }
+    .opt-btn small { color: var(--text-muted); font-size: 0.75rem; font-weight: 500; }
+    .opt-btn:hover { background: #e2e8f0; }
+    .opt-btn.selected { background: #fffaf0; border-color: var(--brand-primary); box-shadow: 0 4px 15px rgba(255,158,0,0.1); color: var(--brand-primary); }
+    .opt-btn.selected small { color: var(--brand-primary); opacity: 0.8; }
+
+    /* Buttons & Inputs */
+    .btn { padding: 14px 20px; border-radius: 16px; border: none; font-weight: 700; cursor: pointer; transition: all 0.2s; font-size: 0.95rem; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.1); }
+    .btn:active { transform: translateY(0); }
+    .btn-primary { background: linear-gradient(135deg, var(--brand-primary), #ffb703); color: #ffffff; box-shadow: 0 6px 20px rgba(255,158,0,0.3); width: 100%; font-size: 1.05rem; padding: 18px; }
+    .btn-success { background: linear-gradient(135deg, #10b981, #34d399); color: #fff; box-shadow: 0 6px 20px rgba(16,185,129,0.3); }
+    .btn-danger { background: var(--danger-bg); color: var(--danger); }
+    .btn-danger:hover { background: #fecaca; }
+    .btn-outline { background: #ffffff; border: 1px solid var(--input-border); color: var(--text-main); }
+    
+    .input-group { margin-bottom: 18px; }
+    .input-group label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px; font-weight: 600; }
+    .form-control { width: 100%; padding: 16px; border-radius: 16px; border: 1.5px solid var(--input-border); background: var(--input-bg); color: var(--text-main); font-weight: 500; font-size: 0.95rem; outline: none; transition: all 0.3s; }
+    .form-control::placeholder { color: #94a3b8; }
+    .form-control:focus { border-color: var(--brand-primary); box-shadow: 0 0 0 4px rgba(255,158,0,0.1); background: #ffffff; }
+
+    /* Cart */
+    .cart-list { display: flex; flex-direction: column; gap: 12px; max-height: 350px; overflow-y: auto; margin-bottom: 24px; padding-right: 5px; }
+    .cart-item { background: #ffffff; border: 1px solid var(--input-border); border-radius: 18px; padding: 16px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+    .cart-item-info h4 { font-size: 1rem; margin-bottom: 4px; color: var(--text-main); font-weight: 800; }
+    .cart-item-info p { font-size: 0.8rem; color: var(--text-muted); font-weight: 500; }
+    .total-box { background: linear-gradient(135deg, #ffffff, #fffaf0); border: 1.5px solid var(--brand-primary); padding: 20px; border-radius: 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; box-shadow: 0 8px 20px rgba(255,158,0,0.1); }
+    .total-box span { font-size: 1rem; color: var(--text-main); font-weight: 700; }
+    .total-box strong { font-size: 1.6rem; color: var(--brand-primary); font-weight: 800; }
+
+    /* History Grid */
+    .history-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; margin-top: 16px; }
+    .history-card { background: #ffffff; border: 1px solid var(--input-border); border-radius: 20px; padding: 20px; display: flex; flex-direction: column; gap: 12px; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.03); transition: 0.3s; }
+    .history-card:hover { transform: translateY(-4px); box-shadow: 0 10px 25px rgba(0,0,0,0.08); }
+    .history-card-top { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: var(--text-muted); font-weight: 600; }
+    .tag-pay { padding: 6px 12px; border-radius: 10px; font-weight: 800; font-size: 0.75rem; letter-spacing: 0.5px; }
+    .tag-pay.CASH { background: var(--warning-bg); color: #d97706; }
+    .tag-pay.QRIS { background: var(--success-bg); color: var(--success); }
+    .history-actions { display: flex; gap: 8px; margin-top: 12px; border-top: 1px solid var(--input-border); padding-top: 16px; }
+
+    /* Add Product Grid */
+    .product-list { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
+    .product-item { display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 16px; border-radius: 18px; border: 1px solid var(--input-border); box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 30px; right: 30px; background: var(--text-main); border: none;
+      color: #fff; padding: 16px 24px; border-radius: 16px; font-weight: 700; box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      transform: translateY(150%); opacity: 0; transition: 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); z-index: 9999;
+      font-size: 0.95rem; display: flex; align-items: center; gap: 10px;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+  </style>
+</head>
+<body>
+
+  <div class="liquid-bg">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+  </div>
+
+  <div class="container">
+    
+    <!-- Navigation Tabs -->
+    <div class="nav-bar">
+      <button class="nav-btn active" onclick="switchTab('tab-kasir')">🛒 Kasir POS</button>
+      <button class="nav-btn" onclick="switchTab('tab-riwayat')">📊 Riwayat & Rekap</button>
+      <button class="nav-btn" onclick="switchTab('tab-kelola')">⚙️ Kelola Menu</button>
+    </div>
+
+    <!-- Header Stats -->
+    <header>
+      <div class="brand">
+        <div class="brand-logo">CR</div>
+        <div class="brand-text">
+          <h1>CHICKROLL POS</h1>
+          <p>Smart Cashier & Management System</p>
+        </div>
+      </div>
+      <div class="stats-bar">
+        <div class="stat-pill"><span>Total Order</span><strong id="statTotalOrder">0</strong></div>
+        <div class="stat-pill"><span>Tunai (Cash)</span><strong id="statCash">Rp 0</strong></div>
+        <div class="stat-pill"><span>QRIS</span><strong id="statQris">Rp 0</strong></div>
+        <div class="stat-pill"><span>Omzet Hari Ini</span><strong id="statOmzet">Rp 0</strong></div>
+      </div>
+    </header>
+
+    <!-- ================= TAB 1: KASIR ================= -->
+    <div id="tab-kasir" class="tab-content active">
+      <div class="main-grid">
+        <!-- Panel Kiri: Menu -->
+        <div class="glass-panel">
+          <div class="section-title">
+            <span>🍔 Pilih Menu</span>
+            <span class="badge">Klik untuk Atur Pesanan</span>
+          </div>
+          <div class="menu-grid" id="menuGrid"></div>
+          <div id="configuratorBox" class="configurator"></div>
+        </div>
+
+        <!-- Panel Kanan: Keranjang -->
+        <div class="glass-panel">
+          <div class="section-title">
+            <span>🛒 Keranjang</span>
+            <span class="badge" id="cartCountBadge">0 Item</span>
+          </div>
+
+          <div class="input-group">
+            <input type="text" id="customerName" class="form-control" placeholder="Nama Pelanggan / No. Meja (Opsional)" autocomplete="off" />
+          </div>
+
+          <div class="cart-list" id="cartList"></div>
+
+          <div class="options-grid" style="margin-bottom: 20px;">
+            <button class="opt-btn selected" id="payCash" onclick="setPayment('CASH')" style="text-align:center; padding: 16px; font-size: 1rem;">💵 Tunai (CASH)</button>
+            <button class="opt-btn" id="payQris" onclick="setPayment('QRIS')" style="text-align:center; padding: 16px; font-size: 1rem;">📱 QRIS / Transfer</button>
+          </div>
+
+          <div class="total-box">
+            <span>Total Bayar</span>
+            <strong id="grandTotal">Rp 0</strong>
+          </div>
+
+          <div style="display: flex; gap: 12px;">
+            <button class="btn btn-outline" onclick="copyCurrentReceipt()" style="flex: 1;">📋 Salin Struk</button>
+            <button class="btn btn-success" onclick="saveTransaction()" style="flex: 1.5; font-size: 1rem;">✅ Simpan Transaksi</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= TAB 2: RIWAYAT ================= -->
+    <div id="tab-riwayat" class="tab-content">
+      <div class="glass-panel">
+        <div class="section-title">
+          <span>📊 Riwayat Transaksi Hari Ini</span>
+          <div style="display: flex; gap: 10px;">
+            <button class="btn btn-outline" style="font-size:0.85rem; padding: 10px 16px;" onclick="copyDailyRecap()">✨ Salin Rekap WA</button>
+            <button class="btn btn-danger" style="font-size:0.85rem; padding: 10px 16px;" onclick="clearAllHistory()">🗑️ Reset Semua</button>
+          </div>
+        </div>
+        <div class="history-grid" id="historyGrid"></div>
+      </div>
+    </div>
+
+    <!-- ================= TAB 3: KELOLA MENU ================= -->
+    <div id="tab-kelola" class="tab-content">
+      <div class="main-grid">
+        <div class="glass-panel">
+          <div class="section-title"><span>➕ Tambah Produk Baru</span></div>
+          <div class="input-group">
+            <label>Nama Produk</label>
+            <input type="text" id="newMenuName" class="form-control" placeholder="Cth: Es Teh Manis">
+          </div>
+          <div class="input-group">
+            <label>Icon (Emoji)</label>
+            <input type="text" id="newMenuIcon" class="form-control" placeholder="Cth: 🍹">
+          </div>
+          <div class="input-group">
+            <label>Deskripsi Singkat</label>
+            <input type="text" id="newMenuDesc" class="form-control" placeholder="Cth: Segar dan manis">
+          </div>
+          <div class="input-group">
+            <label>Harga Dasar (Rp)</label>
+            <input type="number" id="newMenuPrice" class="form-control" placeholder="Cth: 5000">
+          </div>
+          <button class="btn btn-primary" onclick="addNewMenu()">+ Simpan Produk</button>
+        </div>
+
+        <div class="glass-panel">
+          <div class="section-title"><span>📋 Daftar Produk Saat Ini</span></div>
+          <div class="product-list" id="manageMenuList"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="toast" class="toast">✨ Notifikasi!</div>
+
+  <script>
+    /* ================= DATA & STATE ================= */
+    const DEFAULT_MENUS = [
+      { id: "chickroll", name: "Chick Roll", icon: "🌯", desc: "10cm/20cm + 1 Saus + 2 Bumbu", priceLabel: "Rp 12.000", variants: [{ label: "Small (10cm)", price: 12000 }, { label: "Reguler (20cm)", price: 15000 }], sauces: ["Salty Chizu", "Japanese Kata"], maxBumbu: 2, addons: [] },
+      { id: "macncheese", name: "Mac N Cheese", icon: "🧀", desc: "Creamy keju lumer", priceLabel: "Rp 15.000", variants: [{ label: "Original", price: 15000 }, { label: "With Chicken", price: 20000 }], sauces: [], maxBumbu: 0, addons: [] },
+      { id: "fries", name: "French Fries", icon: "🍟", desc: "Kentang goreng renyah", priceLabel: "Rp 10.000", variants: [{ label: "Original", price: 10000 }], sauces: [], maxBumbu: 2, addons: [] }
+    ];
+
+    const BUMBULIST = ["Amai BBQ", "Hot Chili", "Japanese Nori", "Keju Cheddar"];
+    
+    // Load Data dari LocalStorage
+    let menus = JSON.parse(localStorage.getItem("chickroll_menus_light")) || DEFAULT_MENUS;
+    let transactions = JSON.parse(localStorage.getItem("chickroll_transactions_light")) || [];
+
+    let activeMenu = menus[0];
+    let currentSelection = { variantIndex: 0, sauce: "", bumbu: [], addonIndex: 0, qty: 1 };
+    let cart = [];
+    let paymentMethod = "CASH";
+
+    // Format Rupiah
+    const formatRp = (num) => "Rp " + Number(num).toLocaleString("id-ID");
+    const showToast = (msg) => {
+      const t = document.getElementById("toast"); t.innerHTML = msg;
+      t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 2800);
+    };
+
+    /* ================= TAB NAVIGATION ================= */
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      event.target.classList.add('active');
+    }
+
+    /* ================= KASIR & MENU RENDERING ================= */
+    function renderMenus() {
+      const grid = document.getElementById("menuGrid");
+      grid.innerHTML = menus.map(m => `
+        <div class="menu-card ${activeMenu.id === m.id ? 'active' : ''}" onclick="selectMenu('${m.id}')">
+          <div><div class="menu-icon">${m.icon}</div><div class="menu-name">${m.name}</div><div class="menu-desc">${m.desc}</div></div>
+          <div class="menu-price-tag">${m.priceLabel}</div>
+        </div>
+      `).join("");
+      renderManageMenuList();
+    }
+
+    function selectMenu(id) {
+      activeMenu = menus.find(m => m.id === id);
+      currentSelection = { variantIndex: 0, sauce: activeMenu.sauces?.length ? activeMenu.sauces[0] : "", bumbu: [], addonIndex: 0, qty: 1 };
+      renderMenus(); renderConfigurator();
+    }
+
+    function renderConfigurator() {
+      const box = document.getElementById("configuratorBox");
+      const variant = activeMenu.variants[currentSelection.variantIndex];
+      const subTotal = variant.price * currentSelection.qty;
+
+      let html = `<div style="font-weight: 800; font-size: 1.2rem; margin-bottom: 16px; color: var(--text-main);">✨ Atur: ${activeMenu.name}</div>`;
+
+      // Varian
+      if(activeMenu.variants.length > 1) {
+        html += `<div class="config-label">1. Ukuran/Varian</div><div class="options-grid">` + 
+          activeMenu.variants.map((v, i) => `<button class="opt-btn ${currentSelection.variantIndex === i ? 'selected':''}" onclick="currentSelection.variantIndex=${i};renderConfigurator()"><span>${v.label}</span><small>${formatRp(v.price)}</small></button>`).join("") + `</div>`;
+      }
+
+      // Saus
+      if(activeMenu.sauces && activeMenu.sauces.length > 0) {
+        html += `<div class="config-label">2. Pilih Saus</div><div class="options-grid">` + 
+          activeMenu.sauces.map(s => `<button class="opt-btn ${currentSelection.sauce === s ? 'selected':''}" onclick="currentSelection.sauce='${s}';renderConfigurator()"><span>${s}</span></button>`).join("") + `</div>`;
+      }
+
+      // Bumbu
+      if(activeMenu.maxBumbu > 0) {
+        html += `<div class="config-label">3. Bumbu (Maks ${activeMenu.maxBumbu}) - Terpilih: ${currentSelection.bumbu.length}</div><div class="options-grid">` + 
+          BUMBULIST.map(b => `<button class="opt-btn ${currentSelection.bumbu.includes(b) ? 'selected':''}" onclick="toggleBumbu('${b}')"><span>${b}</span></button>`).join("") + `</div>`;
+      }
+
+      html += `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:24px; border-top:1.5px dashed var(--input-border); padding-top:20px;">
+          <div style="display:flex; gap:14px; align-items:center; background: var(--bg-light); padding:10px 18px; border-radius:16px; border: 1px solid var(--input-border);">
+            <button style="background:none; border:none; color:var(--text-main); font-size:1.4rem; cursor:pointer; font-weight: 600;" onclick="changeQty(-1)">−</button>
+            <span style="font-weight:800; width:24px; text-align:center; font-size: 1.1rem; color:var(--text-main);">${currentSelection.qty}</span>
+            <button style="background:none; border:none; color:var(--text-main); font-size:1.4rem; cursor:pointer; font-weight: 600;" onclick="changeQty(1)">+</button>
+          </div>
+          <button class="btn btn-primary" style="width: auto; padding: 14px 28px; border-radius: 16px;" onclick="addToCart()">+ Tambah (${formatRp(subTotal)})</button>
+        </div>
+      `;
+      box.innerHTML = html;
+    }
+
+    function toggleBumbu(b) {
+      let idx = currentSelection.bumbu.indexOf(b);
+      if(idx > -1) currentSelection.bumbu.splice(idx, 1);
+      else {
+        if(currentSelection.bumbu.length < activeMenu.maxBumbu) currentSelection.bumbu.push(b);
+        else { currentSelection.bumbu.shift(); currentSelection.bumbu.push(b); }
+      }
+      renderConfigurator();
+    }
+    function changeQty(d) { if(currentSelection.qty + d >= 1) { currentSelection.qty += d; renderConfigurator(); } }
+
+    /* ================= KERANJANG ================= */
+    function addToCart() {
+      const v = activeMenu.variants[currentSelection.variantIndex];
+      let details = [];
+      if(v.label !== "Original") details.push(v.label);
+      if(currentSelection.sauce) details.push(`Saus: ${currentSelection.sauce}`);
+      if(currentSelection.bumbu.length) details.push(`Bumbu: ${currentSelection.bumbu.join(", ")}`);
+
+      cart.push({
+        id: Date.now(), name: activeMenu.name,
+        details: details.join(" | "), qty: currentSelection.qty,
+        totalPrice: v.price * currentSelection.qty
+      });
+      renderCart(); showToast(`✅ <b>${activeMenu.name}</b> masuk keranjang!`);
+      // Reset qty
+      currentSelection.qty = 1; renderConfigurator();
+    }
+
+    function renderCart() {
+      const list = document.getElementById("cartList");
+      document.getElementById("cartCountBadge").textContent = `${cart.length} Item`;
+      const total = cart.reduce((a, b) => a + b.totalPrice, 0);
+      document.getElementById("grandTotal").textContent = formatRp(total);
+
+      if(!cart.length) return list.innerHTML = `<p style="text-align:center; color:var(--text-muted); padding:30px 0; font-weight: 500;">Keranjang masih kosong.</p>`;
+
+      list.innerHTML = cart.map(c => `
+        <div class="cart-item">
+          <div class="cart-item-info"><h4>${c.qty}x ${c.name}</h4><p>${c.details}</p></div>
+          <div style="display:flex; align-items:center; gap:12px;">
+            <strong style="color:var(--text-main); font-size:1rem;">${formatRp(c.totalPrice)}</strong>
+            <button class="btn btn-danger" style="padding:8px 12px; border-radius:12px; font-size: 0.8rem;" onclick="cart=cart.filter(x=>x.id!==${c.id});renderCart()">✕</button>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function setPayment(m) {
+      paymentMethod = m;
+      document.getElementById("payCash").classList.toggle("selected", m === "CASH");
+      document.getElementById("payQris").classList.toggle("selected", m === "QRIS");
+    }
+
+    /* ================= TRANSAKSI & RIWAYAT (EDIT & HAPUS 1 PER 1) ================= */
+    function saveTransaction() {
+      if(!cart.length) return showToast("⚠️ Keranjang kosong, pilih menu dulu!");
+      const cust = document.getElementById("customerName").value.trim() || "Pelanggan Umum";
+      const total = cart.reduce((a, b) => a + b.totalPrice, 0);
+      
+      transactions.unshift({
+        id: "TRX-" + Date.now().toString().slice(-4),
+        customer: cust, time: new Date().toLocaleTimeString("id-ID", {hour:'2-digit', minute:'2-digit'}),
+        payment: paymentMethod, items: [...cart], total
+      });
+      
+      localStorage.setItem("chickroll_transactions_light", JSON.stringify(transactions));
+      cart = []; document.getElementById("customerName").value = "";
+      renderCart(); renderHistory(); showToast("🎉 Transaksi Berhasil Disimpan!");
+    }
+
+    function renderHistory() {
+      const tCash = transactions.filter(t=>t.payment==="CASH").reduce((a,b)=>a+b.total,0);
+      const tQris = transactions.filter(t=>t.payment==="QRIS").reduce((a,b)=>a+b.total,0);
+      
+      document.getElementById("statTotalOrder").textContent = transactions.length;
+      document.getElementById("statCash").textContent = formatRp(tCash);
+      document.getElementById("statQris").textContent = formatRp(tQris);
+      document.getElementById("statOmzet").textContent = formatRp(tCash + tQris);
+
+      const grid = document.getElementById("historyGrid");
+      if(!transactions.length) return grid.innerHTML = `<p style="color:var(--text-muted); font-weight: 500;">Belum ada transaksi hari ini.</p>`;
+
+      grid.innerHTML = transactions.map(t => `
+        <div class="history-card">
+          <div class="history-card-top">
+            <span>#${t.id} • ${t.time}</span>
+            <span class="tag-pay ${t.payment}">${t.payment}</span>
+          </div>
+          <div style="font-weight:800; font-size:1.1rem; color: var(--text-main);">👤 ${t.customer}</div>
+          <div style="font-size:0.85rem; color:var(--text-muted); line-height:1.6; font-weight: 500;">
+            ${t.items.map(i => `• ${i.qty}x ${i.name} <small>(${i.details})</small>`).join("<br/>")}
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+            <span style="font-size:0.85rem; color:var(--text-muted); font-weight:600;">Total</span>
+            <strong style="color:var(--brand-primary); font-size: 1.2rem;">${formatRp(t.total)}</strong>
+          </div>
+          <div class="history-actions">
+            <button class="btn btn-outline" style="flex:1; font-size:0.8rem; padding:8px; border-radius: 12px;" onclick="editPayment('${t.id}')">✏️ Ubah ${t.payment === 'CASH' ? 'QRIS' : 'CASH'}</button>
+            <button class="btn btn-danger" style="flex:1; font-size:0.8rem; padding:8px; border-radius: 12px;" onclick="deleteTx('${t.id}')">🗑️ Hapus</button>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    // Fitur: Hapus Transaksi 1 per 1
+    function deleteTx(id) {
+      if(confirm("Yakin ingin menghapus transaksi ini?")) {
+        transactions = transactions.filter(t => t.id !== id);
+        localStorage.setItem("chickroll_transactions_light", JSON.stringify(transactions));
+        renderHistory(); showToast("🗑️ Transaksi dihapus.");
+      }
+    }
+
+    // Fitur: Edit Transaksi 1 per 1 (Ubah metode pembayaran)
+    function editPayment(id) {
+      let t = transactions.find(t => t.id === id);
+      if(t) {
+        t.payment = t.payment === "CASH" ? "QRIS" : "CASH";
+        localStorage.setItem("chickroll_transactions_light", JSON.stringify(transactions));
+        renderHistory(); showToast("✏️ Pembayaran diubah menjadi " + t.payment);
+      }
+    }
+
+    function clearAllHistory() {
+      if(confirm("Hapus SEMUA riwayat hari ini? Aksi ini tidak bisa dikembalikan.")) {
+        transactions = []; localStorage.removeItem("chickroll_transactions_light");
+        renderHistory(); showToast("🗑️ Seluruh data direset.");
+      }
+    }
+
+    function copyDailyRecap() {
+      if(!transactions.length) return showToast("⚠️ Data masih kosong!");
+      const tCash = transactions.filter(t=>t.payment==="CASH").reduce((a,b)=>a+b.total,0);
+      const tQris = transactions.filter(t=>t.payment==="QRIS").reduce((a,b)=>a+b.total,0);
+      
+      let txt = `🌸 *REKAP CHICKROLL* 🌸\n📅 ${new Date().toLocaleDateString("id-ID")}\n━━━━━━━━━━━━\n📦 Order : ${transactions.length}\n💵 CASH  : ${formatRp(tCash)}\n📱 QRIS  : ${formatRp(tQris)}\n🔥 OMZET : *${formatRp(tCash+tQris)}*\n━━━━━━━━━━━━\n`;
+      transactions.forEach((t, i) => {
+        txt += `${i+1}. [${t.payment}] ${t.customer} - ${formatRp(t.total)}\n`;
+      });
+      navigator.clipboard.writeText(txt); showToast("✨ Rekap WA disalin ke Clipboard!");
+    }
+
+    function copyCurrentReceipt() {
+      if(!cart.length) return showToast("⚠️ Keranjang kosong!");
+      const total = cart.reduce((a, b) => a + b.totalPrice, 0);
+      let txt = `✨ *STRUK CHICKROLL* ✨\n👤 ${(document.getElementById("customerName").value||"Pelanggan")}\n💳 ${paymentMethod}\n━━━━━━━━━━━━\n`;
+      cart.forEach(c => { txt += `• ${c.qty}x ${c.name} (${formatRp(c.totalPrice)})\n  _${c.details}_\n`; });
+      txt += `━━━━━━━━━━━━\n💰 TOTAL : *${formatRp(total)}*`;
+      navigator.clipboard.writeText(txt); showToast("📋 Struk berhasil disalin!");
+    }
+
+    /* ================= KELOLA MENU (TAMBAH PRODUK BARU) ================= */
+    function renderManageMenuList() {
+      const list = document.getElementById("manageMenuList");
+      list.innerHTML = menus.map(m => `
+        <div class="product-item">
+          <div><strong style="font-size:1.05rem; color: var(--text-main);">${m.icon} ${m.name}</strong><div style="font-size:0.85rem; color:var(--text-muted); font-weight: 500; margin-top: 4px;">${m.priceLabel}</div></div>
+          <button class="btn btn-danger" style="padding:10px 14px; font-size:0.85rem; border-radius: 12px;" onclick="deleteMenu('${m.id}')">Hapus</button>
+        </div>
+      `).join("");
+    }
+
+    function addNewMenu() {
+      const name = document.getElementById("newMenuName").value.trim();
+      const icon = document.getElementById("newMenuIcon").value.trim() || "🍲";
+      const desc = document.getElementById("newMenuDesc").value.trim() || "Menu Spesial";
+      const price = parseInt(document.getElementById("newMenuPrice").value);
+
+      if(!name || isNaN(price)) return showToast("⚠️ Nama dan Harga Dasar wajib diisi!");
+
+      const newMenu = {
+        id: "menu_" + Date.now(), name, icon, desc, priceLabel: formatRp(price),
+        variants: [{ label: "Original", price: price }], sauces: [], maxBumbu: 0, addons: []
+      };
+
+      menus.push(newMenu);
+      localStorage.setItem("chickroll_menus_light", JSON.stringify(menus));
+      
+      document.getElementById("newMenuName").value = "";
+      document.getElementById("newMenuIcon").value = "";
+      document.getElementById("newMenuDesc").value = "";
+      document.getElementById("newMenuPrice").value = "";
+      
+      renderMenus(); showToast(`✅ Menu <b>${name}</b> ditambahkan!`);
+    }
+
+    function deleteMenu(id) {
+      if(menus.length <= 1) return showToast("⚠️ Harus tersisa minimal 1 menu!");
+      if(confirm("Hapus menu ini dari daftar?")) {
+        menus = menus.filter(m => m.id !== id);
+        localStorage.setItem("chickroll_menus_light", JSON.stringify(menus));
+        if(activeMenu.id === id) activeMenu = menus[0];
+        renderMenus(); selectMenu(activeMenu.id); showToast("🗑️ Menu dihapus.");
+      }
+    }
+
+    /* ================= INISIALISASI ================= */
+    renderMenus();
+    selectMenu(menus[0].id);
+    renderCart();
+    renderHistory();
+  </script>
+</body>
+</html>
